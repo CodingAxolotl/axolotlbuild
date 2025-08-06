@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game-Axolotl Build</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .info-button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .info-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-button:hover {
+            color: #333;
+        }
+
+        .modal-content h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .modal-content h3 {
+            color: #764ba2;
+            margin: 20px 0 10px 0;
+        }
+
+        .modal-content p, .modal-content li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .modal-btn.confirm-btn {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .modal-btn.confirm-btn:hover {
+            background: #cc3333;
+        }
+
+        .modal-btn.cancel-btn {
+            background: #ddd;
+            color: #333;
+        }
+
+        .modal-btn.cancel-btn:hover {
+            background: #ccc;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .axolotl-emoji {
+            font-size: 3rem;
+            margin: 0 10px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .mode-btn.active {
+            background: #ff6b6b;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .color-picker {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .color-btn.active {
+            border-color: white;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .grid-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(14, 30px);
+            grid-template-rows: repeat(8, 30px);
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 3px;
+        }
+
+        .cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+        }
+
+        .cell.filled {
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            background: #4ecdc4;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            background: #45b7aa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        .action-btn.danger {
+            background: #ff6b6b;
+        }
+
+        .action-btn.danger:hover {
+            background: #ff5252;
+        }
+        
+        .action-btn.disabled {
+            background-color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .action-btn.disabled:hover {
+            background-color: #999;
+        }
+
+        .instruction-panel, .memory-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+            width: 100%;
+        }
+
+        .instruction-panel.active, .memory-panel.active {
+            display: block;
+        }
+
+        .pattern-display {
+            display: grid;
+            grid-template-columns: repeat(14, 15px);
+            grid-template-rows: repeat(8, 15px);
+            gap: 1px;
+            justify-content: center;
+            margin: 15px 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .pattern-cell {
+            width: 15px;
+            height: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .memory-timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            color: #ff6b6b;
+        }
+
+        .score {
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(14, 25px);
+                grid-template-rows: repeat(8, 25px);
+            }
+            
+            .cell {
+                width: 25px;
+                height: 25px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="info-button" onclick="showModal('info')">ℹ️</button>
+        <h1 class="title">
+            <span class="axolotl-emoji">🦎</span>
+            Game-Axolotl Build
+            <span class="axolotl-emoji">🦎</span>
+        </h1>
+    </div>
+
+    <div class="game-container">
+        <div class="mode-buttons">
+            <button class="mode-btn" id="freestyle-mode-btn" onclick="setMode('freestyle')">🎨 Freestyle</button>
+            <button class="mode-btn" id="instruction-mode-btn" onclick="setMode('instruction')">📋 Instruction</button>
+            <button class="mode-btn" id="memory-mode-btn" onclick="setMode('memory')">🧠 Memory</button>
+        </div>
+
+        <!-- Global Color Controls -->
+        <div class="color-picker-container">
+            <label>Colors:</label>
+            <div class="color-palette">
+                <div class="color-btn active" style="background-color: #3b82f6;" onclick="selectColor('#3b82f6')" title="Blue"></div>
+                <div class="color-btn" style="background-color: #10b981;" onclick="selectColor('#10b981')" title="Green"></div>
+                <div class="color-btn" style="background-color: #ef4444;" onclick="selectColor('#ef4444')" title="Red"></div>
+                <div class="color-btn" style="background-color: #f97316;" onclick="selectColor('#f97316')" title="Orange"></div>
+                <div class="color-btn" style="background-color: #eab308;" onclick="selectColor('#eab308')" title="Yellow"></div>
+                <div class="color-btn" style="background-color: #8b5cf6;" onclick="selectColor('#8b5cf6')" title="Purple"></div>
+                <div class="color-btn" style="background-color: #ec4899;" onclick="selectColor('#ec4899')" title="Pink"></div>
+                <input type="color" class="color-picker" id="freestyleColorPicker" value="#3b82f6" onchange="selectCustomColor(this.value)">
+            </div>
+        </div>
+
+        <!-- Instruction Panel -->
+        <div class="instruction-panel" id="instruction-panel">
+            <h3>Follow the Pattern!</h3>
+            <p>Recreate the pattern shown below, one cell at a time!</p>
+            <div class="pattern-display" id="instruction-pattern-display"></div>
+            <button class="action-btn" id="new-instruction-btn" onclick="startInstructionChallenge()" style="display:none;">Start New Axolotl</button>
+        </div>
+
+        <!-- Memory Panel -->
+        <div class="memory-panel" id="memory-panel">
+            <h3>Memory Challenge!</h3>
+            <p>Study the pattern, then recreate it from memory! Level: <span id="memory-level">1</span></p>
+            <div class="memory-timer" id="memory-timer"></div>
+            <div class="pattern-display" id="memory-pattern-display"></div>
+            <div class="score">Score: <span id="memory-score">0</span></div>
+            <button class="action-btn" id="start-memory-btn" onclick="startMemoryChallenge()">Start Challenge</button>
+        </div>
+
+        <!-- The main grid container, always present but content changes -->
+        <div class="grid-container">
+            <div class="grid" id="main-grid"></div>
+        </div>
+        
+        <div class="action-buttons" id="main-action-buttons">
+            <button class="action-btn" onclick="showModal('clearGrid')">🧹 Clear All</button>
+            <button class="action-btn" onclick="fillRandom()">🎲 Random Fill</button>
+            <button class="action-btn" id="save-btn" onclick="savePattern()">💾 Save Pattern</button>
+            <button class="action-btn" id="load-btn" onclick="loadPattern()">📁 Load Pattern</button>
+            <button class="action-btn danger" id="eraser-btn" onclick="toggleEraser()">🗑️ <span id="eraser-text">Eraser</span></button>
+        </div>
+    </div>
+
+    <!-- Custom Modals -->
+    <div id="info-modal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-button" onclick="closeModal()">×</button>
+            <h2 id="modal-title"></h2>
+            <div id="modal-body"></div>
+            <div id="modal-actions" class="modal-actions"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global game state variables
+        let currentMode = 'freestyle';
+        let currentColor = '#3b82f6';
+        let eraserMode = false;
+        let grid = [];
+        let instructionPattern = [];
+        let memoryPattern = [];
+        let memoryScore = 0;
+        let memoryTimer = null;
+        let isMemoryStudyPhase = false;
+        let instructionStep = 0;
+        let memoryLevel = 1;
+        let storagePermission = null;
+
+        const ROWS = 8;
+        const COLS = 14;
+        
+        // Define a fixed pattern for the instruction mode (an axolotl)
+        const AXOLOTL_PATTERN = [
+            ['#ec4899', '#ec4899', '#ec4899', null, null, null, null, null, null, null, null, null, null, null],
+            ['#ec4899', '#ec4899', '#ec4899', null, null, '#f97316', '#f97316', '#f97316', '#f97316', '#f97316', null, null, null, null],
+            ['#ec4899', null, '#ec4899', null, '#f97316', '#eab308', '#eab308', '#eab308', '#eab308', '#eab308', '#f97316', null, null, null],
+            [null, null, null, '#f97316', '#eab308', '#eab308', '#f97316', '#f97316', '#f97316', '#eab308', '#eab308', '#f97316', null, null],
+            [null, null, '#f97316', '#f97316', '#eab308', '#eab308', '#f97316', '#eab308', '#eab308', '#f97316', '#eab308', '#eab308', '#f97316', null],
+            [null, '#f97316', '#f97316', '#eab308', '#f97316', '#eab308', '#eab308', '#eab308', '#eab308', '#eab308', '#f97316', '#eab308', '#f97316', null],
+            ['#f97316', '#f97316', '#eab308', '#eab308', '#eab308', '#eab308', '#eab308', '#eab308', '#eab308', '#eab308', '#f97316', '#f97316', '#f97316', null],
+            [null, '#f97316', null, '#f97316', null, '#f97316', null, '#f97316', null, '#f97316', null, '#f97316', null, null],
+        ];
+        
+        const AXOLOTL_STEPS = [];
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                if (AXOLOTL_PATTERN[row][col]) {
+                    AXOLOTL_STEPS.push({row, col, color: AXOLOTL_PATTERN[row][col]});
+                }
+            }
+        }
+
+        // Initializes the game on page load
+        window.onload = () => {
+            initGame();
+        };
+
+        // Initialize the game
+        function initGame() {
+            createGrid();
+            setMode('freestyle');
+            requestStoragePermission();
+            updateColorPicker();
+        }
+
+        // Requests storage permission from the user
+        function requestStoragePermission() {
+            const savedPermission = localStorage.getItem('axolotlStoragePermission');
+            if (savedPermission === 'granted') {
+                storagePermission = true;
+            } else if (savedPermission === 'denied') {
+                storagePermission = false;
+            } else {
+                showModal('storagePermission');
+            }
+            updateSaveLoadButtons();
+        }
+        
+        // Creates the main grid and initializes the grid array
+        function createGrid() {
+            const mainGrid = document.getElementById('main-grid');
+            mainGrid.innerHTML = '';
+            grid = [];
+
+            for (let row = 0; row < ROWS; row++) {
+                grid[row] = [];
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    mainGrid.appendChild(cell);
+                    grid[row][col] = { color: null, element: cell };
+                }
+            }
+        }
+
+        // Handles cell clicks based on the current mode and tool
+        function handleCellClick(row, col) {
+            const cell = grid[row][col];
+            
+            if (currentMode === 'memory' && isMemoryStudyPhase) {
+                return; // Prevent clicking during study phase
+            }
+            
+            if (eraserMode) {
+                if (cell.color) {
+                    cell.color = null;
+                    cell.element.style.backgroundColor = '';
+                    cell.element.classList.remove('filled');
+                }
+            } else {
+                cell.color = currentColor;
+                cell.element.style.backgroundColor = currentColor;
+                cell.element.classList.add('filled');
+            }
+
+            if (currentMode === 'instruction') {
+                checkPatternCompletion();
+            } else if (currentMode === 'memory' && !isMemoryStudyPhase) {
+                checkMemoryCompletion();
+            }
+        }
+
+        // Selects a color from the palette
+        function selectColor(color) {
+            currentColor = color;
+            eraserMode = false;
+            updateEraserButton();
+            
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll(`.color-btn[style*="${color}"]`).forEach(btn => btn.classList.add('active'));
+            
+            document.querySelectorAll('input[type="color"]').forEach(picker => picker.value = color);
+        }
+
+        // Selects a custom color from the color picker
+        function selectCustomColor(color) {
+            currentColor = color;
+            eraserMode = false;
+            updateEraserButton();
+            
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        // Sets the current game mode
+        function setMode(mode) {
+            // Update active button
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`${mode}-mode-btn`).classList.add('active');
+            
+            // Show/hide UI elements based on mode
+            document.getElementById('instruction-panel').classList.remove('active');
+            document.getElementById('memory-panel').classList.remove('active');
+            
+            currentMode = mode;
+            clearGrid(false); // Clear the grid without a prompt
+            
+            if (mode === 'instruction') {
+                document.getElementById('instruction-panel').classList.add('active');
+                startInstructionChallenge();
+            } else if (mode === 'memory') {
+                document.getElementById('memory-panel').classList.add('active');
+                updateLevelDisplay('memory');
+                document.getElementById('start-memory-btn').style.display = 'block';
+                document.getElementById('memory-timer').textContent = '';
+                document.getElementById('memory-pattern-display').innerHTML = '';
+            }
+        }
+
+        // Updates the level display for instruction and memory modes
+        function updateLevelDisplay(mode) {
+            const level = mode === 'instruction' ? instructionStep : memoryLevel;
+            const levelElement = document.getElementById(`${mode}-level`);
+            if (levelElement) {
+                 levelElement.textContent = level;
+            }
+        }
+
+        // Updates the custom color picker and removes active class from palette buttons
+        function updateColorPicker() {
+            const freestylePicker = document.getElementById('freestyleColorPicker');
+            freestylePicker.addEventListener('change', (e) => selectCustomColor(e.target.value));
+        }
+
+        // Clears the entire grid
+        function clearGrid(prompt = true) {
+            if (prompt) {
+                showModal('clearGrid');
+                return;
+            }
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = grid[row][col];
+                    cell.color = null;
+                    cell.element.style.backgroundColor = '';
+                    cell.element.classList.remove('filled');
+                }
+            }
+        }
+
+        // Fills the grid with a random pattern
+        function fillRandom() {
+            showModal('fillRandom', () => {
+                clearGrid(false);
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7aa', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+                
+                for (let row = 0; row < ROWS; row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        if (Math.random() > 0.7) {
+                            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                            const cell = grid[row][col];
+                            cell.color = randomColor;
+                            cell.element.style.backgroundColor = randomColor;
+                            cell.element.classList.add('filled');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Toggles eraser mode
+        function toggleEraser() {
+            eraserMode = !eraserMode;
+            updateEraserButton();
+        }
+
+        // Updates the eraser button text and style
+        function updateEraserButton() {
+            const eraserText = document.getElementById('eraser-text');
+            const eraserBtn = document.getElementById('eraser-btn');
+            
+            if (eraserMode) {
+                eraserText.textContent = 'Drawing';
+                eraserBtn.style.background = '#4ecdc4'; // Reverting to drawing color
+            } else {
+                eraserText.textContent = 'Eraser';
+                eraserBtn.style.background = '#ff6b6b';
+            }
+        }
+
+        // Starts a new instruction challenge with the fixed axolotl pattern
+        function startInstructionChallenge() {
+            clearGrid(false);
+            instructionStep = 0;
+            instructionPattern = [];
+            showInstructionPattern();
+            document.getElementById('new-instruction-btn').style.display = 'none';
+        }
+        
+        // Reveals the next step in the instruction pattern
+        function showInstructionPattern() {
+            const patternDisplay = document.getElementById('instruction-pattern-display');
+            patternDisplay.innerHTML = '';
+            
+            if (instructionStep < AXOLOTL_STEPS.length) {
+                // Initialize a temporary pattern with nulls
+                let tempPattern = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+                
+                // Copy the completed steps to the temporary pattern
+                for(let i = 0; i <= instructionStep; i++) {
+                    const step = AXOLOTL_STEPS[i];
+                    tempPattern[step.row][step.col] = step.color;
+                }
+                
+                // Render the temporary pattern
+                for (let row = 0; row < ROWS; row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'pattern-cell';
+                        if (tempPattern[row][col]) {
+                            cell.style.backgroundColor = tempPattern[row][col];
+                        }
+                        patternDisplay.appendChild(cell);
+                    }
+                }
+            } else {
+                // All steps completed, show the final pattern
+                for (let row = 0; row < ROWS; row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'pattern-cell';
+                        if (AXOLOTL_PATTERN[row][col]) {
+                            cell.style.backgroundColor = AXOLOTL_PATTERN[row][col];
+                        }
+                        patternDisplay.appendChild(cell);
+                    }
+                }
+            }
+        }
+
+        // Checks if the user's pattern matches the instruction pattern
+        function checkPatternCompletion() {
+            let isCorrect = true;
+            if (instructionStep >= AXOLOTL_STEPS.length) {
+                return; // Game is already completed
+            }
+            
+            const currentStep = AXOLOTL_STEPS[instructionStep];
+            if (grid[currentStep.row][currentStep.col].color === currentStep.color) {
+                instructionStep++;
+                if (instructionStep < AXOLOTL_STEPS.length) {
+                    showInstructionPattern();
+                } else {
+                    // All steps completed
+                    showInstructionPattern();
+                    document.getElementById('new-instruction-btn').style.display = 'inline-block';
+                    showModal('levelUp', { message: 'You have completed the Axolotl! Well done! 🎉' });
+                }
+            }
+        }
+
+        // Starts the memory challenge
+        function startMemoryChallenge() {
+            document.getElementById('start-memory-btn').style.display = 'none';
+            generateMemoryPattern();
+            showMemoryPattern();
+            startMemoryTimer();
+        }
+
+        // Generates a new pattern for memory mode
+        function generateMemoryPattern() {
+            memoryPattern = [];
+            const colors = ['#ff6b6b', '#4ecdc4', '#96ceb4', '#feca57', '#eab308', '#8b5cf6', '#ec4899'];
+            
+            // Adjusted complexity factor for an easier start
+            const complexityFactor = Math.min(1, memoryLevel / 10);
+            const numBlocks = Math.floor(ROWS * COLS * (0.05 + complexityFactor * 0.2));
+            
+            for (let i = 0; i < numBlocks; i++) {
+                const randomRow = Math.floor(Math.random() * ROWS);
+                const randomCol = Math.floor(Math.random() * COLS);
+                const randomColor = colors[Math.floor(Math.random() * Math.min(colors.length, 2 + memoryLevel))];
+                
+                if (!memoryPattern[randomRow]) {
+                    memoryPattern[randomRow] = [];
+                }
+                memoryPattern[randomRow][randomCol] = randomColor;
+            }
+        }
+
+        // Displays the memory pattern to the user
+        function showMemoryPattern() {
+            const patternDisplay = document.getElementById('memory-pattern-display');
+            patternDisplay.innerHTML = '';
+            
+            for (let row = 0; row < ROWS; row++) {
+                if (!memoryPattern[row]) memoryPattern[row] = [];
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'pattern-cell';
+                    if (memoryPattern[row][col]) {
+                        cell.style.backgroundColor = memoryPattern[row][col];
+                    }
+                    patternDisplay.appendChild(cell);
+                }
+            }
+            
+            isMemoryStudyPhase = true;
+            patternDisplay.style.opacity = '1';
+        }
+
+        // Starts the countdown timer for memory mode
+        function startMemoryTimer() {
+            const timeLimit = Math.max(5, 10 - Math.floor(memoryLevel / 2)); // Starts with longer time
+            let timeLeft = timeLimit;
+            const timerElement = document.getElementById('memory-timer');
+            
+            memoryTimer = setInterval(() => {
+                timerElement.textContent = `Time left: ${timeLeft}s`;
+                timeLeft--;
+                
+                if (timeLeft < 0) {
+                    clearInterval(memoryTimer);
+                    hideMemoryPattern();
+                    timerElement.textContent = 'Recreate it!';
+                    isMemoryStudyPhase = false;
+                    clearGrid(false);
+                }
+            }, 1000);
+        }
+
+        // Hides the memory pattern
+        function hideMemoryPattern() {
+            document.getElementById('memory-pattern-display').style.opacity = '0';
+        }
+
+        // Checks the user's recreated pattern in memory mode
+        function checkMemoryCompletion() {
+            let correctCells = 0;
+            let totalPatternCells = 0;
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const gridCellColor = grid[row][col].color;
+                    const patternCellColor = memoryPattern[row][col];
+                    
+                    if (patternCellColor) {
+                        totalPatternCells++;
+                        if (gridCellColor === patternCellColor) {
+                            correctCells++;
+                        }
+                    }
+                }
+            }
+            
+            const accuracy = totalPatternCells > 0 ? (correctCells / totalPatternCells) : 0;
+
+            if (accuracy >= 1) { // Perfect match
+                memoryScore += 10;
+                memoryLevel++;
+                updateLevelDisplay('memory');
+                setTimeout(() => {
+                    showModal('levelUp', { message: `Perfect memory! Level ${memoryLevel - 1} completed! +10 points!` });
+                    updateMemoryScore();
+                    startMemoryChallenge();
+                }, 100);
+            } else if (accuracy >= 0.8) { // Good match
+                memoryScore += 5;
+                setTimeout(() => {
+                    showModal('retry', { message: `Good memory! ${Math.floor(accuracy * 100)}% correct. +5 points! Try again to advance!` });
+                    updateMemoryScore();
+                    startMemoryChallenge();
+                }, 100);
+            }
+        }
+
+        // Updates the displayed memory score
+        function updateMemoryScore() {
+            document.getElementById('memory-score').textContent = memoryScore;
+        }
+
+        // Saves the current pattern to localStorage
+        function savePattern() {
+            if (!storagePermission) {
+                showModal('permissionDenied');
+                return;
+            }
+            
+            let saveKey;
+            switch(currentMode) {
+                case 'instruction': saveKey = 'axolotlInstruction'; break;
+                case 'memory': saveKey = 'axolotlMemory'; break;
+                default: saveKey = 'axolotlFreestyle';
+            }
+            
+            const pattern = [];
+            for (let row = 0; row < ROWS; row++) {
+                pattern[row] = [];
+                for (let col = 0; col < COLS; col++) {
+                    pattern[row][col] = grid[row][col].color;
+                }
+            }
+            
+            localStorage.setItem(saveKey, JSON.stringify(pattern));
+            showModal('saveSuccess');
+        }
+
+        // Loads a saved pattern from localStorage
+        function loadPattern() {
+            if (!storagePermission) {
+                showModal('permissionDenied');
+                return;
+            }
+            
+            let saveKey;
+            switch(currentMode) {
+                case 'instruction': saveKey = 'axolotlInstruction'; break;
+                case 'memory': saveKey = 'axolotlMemory'; break;
+                default: saveKey = 'axolotlFreestyle';
+            }
+            
+            const savedPattern = localStorage.getItem(saveKey);
+            
+            if (savedPattern) {
+                showModal('loadPattern', () => {
+                    const pattern = JSON.parse(savedPattern);
+                    
+                    clearGrid(false);
+                    
+                    for (let row = 0; row < ROWS; row++) {
+                        for (let col = 0; col < COLS; col++) {
+                            const cell = grid[row][col];
+                            const color = pattern[row][col];
+                            
+                            if (color) {
+                                cell.color = color;
+                                cell.element.style.backgroundColor = color;
+                                cell.element.classList.add('filled');
+                            }
+                        }
+                    }
+                    showModal('loadSuccess');
+                });
+            } else {
+                showModal('noSaveFound');
+            }
+        }
+        
+        // Updates the disabled state of the save and load buttons
+        function updateSaveLoadButtons() {
+            const saveBtn = document.getElementById('save-btn');
+            const loadBtn = document.getElementById('load-btn');
+            
+            if (storagePermission) {
+                saveBtn.classList.remove('disabled');
+                loadBtn.classList.remove('disabled');
+                saveBtn.disabled = false;
+                loadBtn.disabled = false;
+            } else {
+                saveBtn.classList.add('disabled');
+                loadBtn.classList.add('disabled');
+                saveBtn.disabled = true;
+                loadBtn.disabled = true;
+            }
+        }
+
+        // Custom Modal System
+        let currentModalCallback = null;
+
+        function showModal(type, callback = null) {
+            const modalOverlay = document.getElementById('info-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const modalActions = document.getElementById('modal-actions');
+            
+            modalTitle.textContent = '';
+            modalBody.innerHTML = '';
+            modalActions.innerHTML = '';
+            
+            currentModalCallback = callback;
+            
+            switch (type) {
+                case 'info':
+                    modalTitle.textContent = '🦎 Game-Axolotl Build - How to Play';
+                    modalBody.innerHTML = `
+                        <h3>🎨 Freestyle Mode</h3>
+                        <p>Create any pattern you want! Use the color palette to select colors and click on the grid to paint.</p>
+                        <h3>📋 Instruction Mode</h3>
+                        <p>Follow the pattern shown above. It reveals one piece at a time. Finish the full pattern to win!</p>
+                        <h3>🧠 Memory Mode</h3>
+                        <p>Test your memory skills! Study the pattern, then recreate it from memory. The score tracks your progress.</p>
+                        <h3>💾 Save System</h3>
+                        <p>Patterns are stored locally on your device. Each mode has a separate save slot.</p>
+                        ${storagePermission ? '' : `
+                            <div style="text-align:center; padding: 10px; background: rgba(255,255,255,0.1); border-radius:10px; margin-top:20px;">
+                                <p>Saving is currently disabled.</p>
+                                <button class="action-btn" onclick="showModal('storagePermission')">Change My Mind</button>
+                            </div>
+                        `}
+                        <button class="action-btn danger" style="background-color: #ff6b6b;" onclick="showModal('deleteAll')">🗑️ Delete All Progress</button>
+                    `;
+                    break;
+                case 'storagePermission':
+                    modalTitle.textContent = 'Welcome! 🦎';
+                    modalBody.innerHTML = '<p>This game can save your patterns to your device for later use. Would you like to allow saving patterns to your browser storage?</p>';
+                    modalActions.innerHTML = `
+                        <button class="modal-btn confirm-btn" onclick="grantStoragePermission(true)">Yes, Allow</button>
+                        <button class="modal-btn cancel-btn" onclick="grantStoragePermission(false)">No, Deny</button>
+                    `;
+                    break;
+                case 'clearGrid':
+                    modalTitle.textContent = 'Clear All?';
+                    modalBody.innerHTML = '<p>Are you sure you want to clear the entire board? This action cannot be undone.</p>';
+                    modalActions.innerHTML = `
+                        <button class="modal-btn confirm-btn" onclick="clearGrid(false); closeModal();">Yes, Clear</button>
+                        <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
+                    `;
+                    break;
+                case 'fillRandom':
+                    modalTitle.textContent = 'Random Fill?';
+                    modalBody.innerHTML = '<p>Are you sure you want to clear the board and create a random pattern?</p>';
+                    modalActions.innerHTML = `
+                        <button class="modal-btn confirm-btn" onclick="if (currentModalCallback) currentModalCallback(); closeModal();">Yes, Fill Randomly</button>
+                        <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
+                    `;
+                    break;
+                case 'saveSuccess':
+                    modalTitle.textContent = 'Pattern Saved!';
+                    modalBody.innerHTML = '<p>Your pattern has been saved successfully!</p>';
+                    modalActions.innerHTML = `<button class="modal-btn cancel-btn" onclick="closeModal()">OK</button>`;
+                    break;
+                case 'loadPattern':
+                    modalTitle.textContent = 'Load Pattern?';
+                    modalBody.innerHTML = '<p>This will clear your current board and replace it with the saved pattern. Continue?</p>';
+                    modalActions.innerHTML = `
+                        <button class="modal-btn confirm-btn" onclick="if (currentModalCallback) currentModalCallback(); closeModal();">Yes, Load</button>
+                        <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
+                    `;
+                    break;
+                case 'loadSuccess':
+                    modalTitle.textContent = 'Pattern Loaded!';
+                    modalBody.innerHTML = '<p>Your saved pattern has been loaded successfully!</p>';
+                    modalActions.innerHTML = `<button class="modal-btn cancel-btn" onclick="closeModal()">OK</button>`;
+                    break;
+                case 'noSaveFound':
+                    modalTitle.textContent = 'No Save Found';
+                    modalBody.innerHTML = '<p>No saved pattern found for this mode. Use the Save Pattern button first!</p>';
+                    modalActions.innerHTML = `<button class="modal-btn cancel-btn" onclick="closeModal()">OK</button>`;
+                    break;
+                case 'permissionDenied':
+                    modalTitle.textContent = 'Saving Disabled';
+                    modalBody.innerHTML = '<p>You have not granted permission to use local storage. Save/Load buttons are now disabled. You can re-enable them from the Info modal.</p>';
+                    modalActions.innerHTML = `<button class="modal-btn cancel-btn" onclick="closeModal()">OK</button>`;
+                    break;
+                case 'deleteAll':
+                    modalTitle.textContent = 'Delete All Progress?';
+                    modalBody.innerHTML = `
+                        <p>Are you sure you want to delete ALL your saved progress? This will remove all saved patterns and reset your levels. This action cannot be undone!</p>
+                        <p>To confirm, please type <strong>"Delete My Progress"</strong> exactly below.</p>
+                        <input type="text" id="delete-confirm-input" class="modal-input" placeholder="Delete My Progress">
+                    `;
+                    modalActions.innerHTML = `
+                        <button class="modal-btn confirm-btn" onclick="confirmDeleteAllProgress()">Yes, Delete All</button>
+                        <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
+                    `;
+                    break;
+                case 'confirmDeleteAll':
+                    modalTitle.textContent = 'Confirm Deletion';
+                    modalBody.innerHTML = `<p>Are you absolutely sure you want to proceed with deleting all your progress? This is permanent.</p>`;
+                    modalActions.innerHTML = `
+                        <button class="modal-btn confirm-btn" onclick="deleteAllProgress()">Yes, I'm Sure</button>
+                        <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
+                    `;
+                    break;
+                case 'levelUp':
+                    modalTitle.textContent = callback.message;
+                    modalBody.innerHTML = '';
+                    modalActions.innerHTML = `<button class="modal-btn cancel-btn" onclick="closeModal()">OK</button>`;
+                    break;
+                case 'retry':
+                    modalTitle.textContent = 'Try Again!';
+                    modalBody.innerHTML = `<p>${callback.message}</p>`;
+                    modalActions.innerHTML = `<button class="modal-btn cancel-btn" onclick="closeModal()">OK</button>`;
+                    break;
+            }
+            
+            modalOverlay.classList.add('active');
+        }
+
+        function closeModal() {
+            const modalOverlay = document.getElementById('info-modal');
+            modalOverlay.classList.remove('active');
+            currentModalCallback = null;
+        }
+
+        function grantStoragePermission(granted) {
+            storagePermission = granted;
+            localStorage.setItem('axolotlStoragePermission', granted ? 'granted' : 'denied');
+            updateSaveLoadButtons();
+            closeModal();
+            if (granted) {
+                showModal('info');
+            } else {
+                showModal('permissionDenied');
+            }
+        }
+
+        function confirmDeleteAllProgress() {
+            const input = document.getElementById('delete-confirm-input');
+            if (input.value === 'Delete My Progress') {
+                showModal('confirmDeleteAll');
+            } else {
+                showModal('retry', { message: 'Incorrect confirmation phrase. Please try again.' });
+            }
+        }
+
+        function deleteAllProgress() {
+            localStorage.clear();
+            instructionStep = 0;
+            memoryLevel = 1;
+            memoryScore = 0;
+            
+            clearGrid(false);
+            updateMemoryScore();
+            setMode('freestyle');
+            
+            showModal('levelUp', { message: 'All progress has been deleted.' });
+        }
+
+    </script>
+</body>
+</html>
